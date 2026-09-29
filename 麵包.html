@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小一 AI 麵包養菌實驗模擬器 (HKU QNT-DT)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts for Child-Friendly Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Noto+Sans+TC:wght@400;600;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            blue: '#1e88e5',
+                            green: '#2e7d32',
+                            orange: '#f57c00',
+                            yellow: '#fbc02d',
+                            bg: '#eef8ff'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Noto Sans TC', 'Fredoka', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #dbeafe;
+            font-family: 'Noto Sans TC', sans-serif;
+            user-select: none;
+        }
+        .tablet-frame {
+            background: #ffffff;
+            border: 12px solid #1e293b;
+            border-radius: 36px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), inset 0 0 10px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .petri-dish {
+            background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(220,240,255,0.6) 70%, rgba(180,210,235,0.9) 100%);
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.15), 0 10px 20px rgba(0,0,0,0.1);
+            border: 4px solid rgba(255, 255, 255, 0.8);
+        }
+        .bread-slice {
+            background-color: #fffdfa;
+            border: 6px solid #d4a373;
+            border-radius: 20px 20px 12px 12px;
+            box-shadow: inset 0 0 8px rgba(212, 163, 115, 0.3), 3px 6px 12px rgba(0,0,0,0.1);
+        }
+        .slider-thumb::-webkit-slider-thumb {
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-2 sm:p-4">
+
+    <div class="tablet-frame w-full max-w-6xl bg-sky-50/80 overflow-hidden flex flex-col p-4 md:p-6 shadow-2xl">
+        
+        <!-- Header Bar -->
+        <header class="flex items-center justify-between pb-3 border-b-2 border-sky-200 mb-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center text-amber-700 shadow-sm border border-amber-200">
+                    <i class="fa-solid font-bold fa-clock text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl lg:text-3xl font-black text-sky-800 tracking-tight flex items-center gap-2">
+                        <span>小一 AI 麵包養菌實驗模擬器</span>
+                        <span class="text-xs md:text-sm bg-emerald-600 text-white px-2.5 py-0.5 rounded-full font-bold shadow-sm">HKU QNT-DT</span>
+                    </h1>
+                    <p class="text-xs text-sky-600 font-semibold">香港大學小學科學探究教學系列 • 香港第一型小一 AI 跨學科單元</p>
+                </div>
+            </div>
+
+            <!-- Top Action Controls -->
+            <div class="flex items-center gap-2">
+                <button onclick="toggleAudio()" id="sound-btn" class="bg-white hover:bg-sky-100 text-sky-700 font-bold px-3 py-1.5 rounded-xl border border-sky-300 shadow-sm transition flex items-center gap-1.5 text-xs sm:text-sm">
+                    <i class="fa-solid fa-volume-high text-amber-500"></i> <span id="sound-txt">語音解說：開</span>
+                </button>
+                <button onclick="resetSimulation()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded-xl shadow-sm transition flex items-center gap-1.5 text-xs sm:text-sm">
+                    <i class="fa-solid fa-rotate-left"></i> 重置實驗
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Experiment Area -->
+        <main class="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1">
+            
+            <div class="lg:col-span-8 flex flex-col gap-4">
+                
+                <!-- Petri Dishes Display -->
+                <div class="bg-white/80 backdrop-blur-sm rounded-3xl p-4 md:p-6 border-2 border-sky-100 shadow-sm flex flex-col md:flex-row justify-around items-center gap-6 relative min-h-[300px]">
+                    
+                    <!-- EXP A -->
+                    <div class="flex flex-col items-center group relative">
+                        <div class="absolute -top-2 bg-sky-600 text-white font-black px-4 py-1 rounded-full text-sm shadow-md z-10 tracking-wider">
+                            EXP A (對照組)
+                        </div>
+                        <div class="petri-dish w-48 h-48 sm:w-56 sm:h-56 rounded-full flex items-center justify-center p-4 relative overflow-hidden transition-transform transform hover:scale-105 duration-300">
+                            <!-- Canvas for Bread & Mould -->
+                            <canvas id="canvas-expA" width="220" height="220" class="rounded-xl cursor-pointer" onclick="inspectMicroscope('EXP A')"></canvas>
+                            <button onclick="inspectMicroscope('EXP A')" class="absolute bottom-2 bg-white/90 hover:bg-white text-xs text-sky-800 font-bold px-2 py-1 rounded-md shadow border border-sky-200">
+                                <i class="fa-solid fa-magnifying-glass text-sky-600"></i> 微觀觀察
+                            </button>
+                        </div>
+                        <div class="mt-2 text-center">
+                            <span id="expA-status" class="inline-block bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full border border-emerald-200">
+                                輕微黴菌 (Mild Mould)
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- EXP B -->
+                    <div class="flex flex-col items-center group relative">
+                        <div class="absolute -top-2 bg-amber-600 text-white font-black px-4 py-1 rounded-full text-sm shadow-md z-10 tracking-wider">
+                            EXP B (實驗組)
+                        </div>
+                        <div class="petri-dish w-48 h-48 sm:w-56 sm:h-56 rounded-full flex items-center justify-center p-4 relative overflow-hidden transition-transform transform hover:scale-105 duration-300">
+                            <!-- Canvas for Bread & Mould -->
+                            <canvas id="canvas-expB" width="220" height="220" class="rounded-xl cursor-pointer" onclick="inspectMicroscope('EXP B')"></canvas>
+                            <button onclick="inspectMicroscope('EXP B')" class="absolute bottom-2 bg-white/90 hover:bg-white text-xs text-amber-800 font-bold px-2 py-1 rounded-md shadow border border-amber-200">
+                                <i class="fa-solid fa-magnifying-glass text-amber-600"></i> 微觀觀察
+                            </button>
+                        </div>
+                        <div class="mt-2 text-center">
+                            <span id="expB-status" class="inline-block bg-rose-100 text-rose-800 text-xs font-bold px-3 py-1 rounded-full border border-rose-200">
+                                嚴重黴菌 (Heavy Mould)
+                            </span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="bg-gradient-to-r from-emerald-500 via-sky-500 to-amber-500 p-1 rounded-3xl shadow-md">
+                    <div class="bg-white rounded-[22px] p-4 flex flex-col md:flex-row items-center gap-4">
+                        
+                        <!-- Location Dropdown -->
+                        <div class="w-full md:w-1/3 bg-emerald-50/80 p-3 rounded-2xl border border-emerald-200">
+                            <label class="text-xs font-black text-emerald-800 flex items-center gap-1.5 mb-1.5">
+                                <i class="fa-solid fa-location-dot text-emerald-600"></i> 選擇實驗地點
+                            </label>
+                            <select id="location-select" onchange="onLocationChange()" class="w-full bg-white font-bold text-gray-700 text-sm py-2 px-3 rounded-xl border border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                                <option value="classroom" selected>🏫 課室 (Classroom - 25°C / 60%)</option>
+                                <option value="fridge">🧊 冰箱 (Fridge - 4°C / 30%)</option>
+                                <option value="balcony">☀️ 陽台 (Balcony - 32°C / 85%)</option>
+                                <option value="bathroom">🚿 浴室 (Bathroom - 28°C / 95%)</option>
+                                <option value="darkroom">📦 陰暗櫃子 (Dark Cupboard - 26°C / 70%)</option>
+                                <option value="custom">⚙️ 自訂環境 (Custom Settings)</option>
+                            </select>
+                        </div>
+
+                        <!-- Temperature Slider -->
+                        <div class="w-full md:w-1/3 bg-sky-50/80 p-3 rounded-2xl border border-sky-200">
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-xs font-black text-sky-800 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-temperature-half text-sky-600"></i> 溫度 (°C)
+                                </label>
+                                <span id="temp-val" class="bg-sky-600 text-white text-xs font-bold px-2 py-0.5 rounded-md">25°C</span>
+                            </div>
+                            <input id="temp-slider" type="range" min="0" max="40" value="25" oninput="onParamChange()" class="w-full accent-sky-600 cursor-pointer h-2 bg-sky-200 rounded-lg">
+                            <div class="flex justify-between text-[10px] text-sky-500 font-bold mt-1">
+                                <span>0°C (極冷)</span>
+                                <span>25°C</span>
+                                <span>40°C (高溫)</span>
+                            </div>
+                        </div>
+
+                        <!-- Humidity Slider -->
+                        <div class="w-full md:w-1/3 bg-amber-50/80 p-3 rounded-2xl border border-amber-200">
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-xs font-black text-amber-800 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-droplet text-amber-600"></i> 濕度 (%)
+                                </label>
+                                <span id="humidity-val" class="bg-amber-600 text-white text-xs font-bold px-2 py-0.5 rounded-md">60%</span>
+                            </div>
+                            <input id="humidity-slider" type="range" min="0" max="100" value="60" oninput="onParamChange()" class="w-full accent-amber-600 cursor-pointer h-2 bg-amber-200 rounded-lg">
+                            <div class="flex justify-between text-[10px] text-amber-500 font-bold mt-1">
+                                <span>0% (乾燥)</span>
+                                <span>50%</span>
+                                <span>100% (極濕)</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Time Controls -->
+                <div class="bg-white/80 rounded-2xl p-3 border border-sky-100 flex items-center justify-between gap-2 shadow-sm">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-black text-sky-900 bg-sky-100 px-3 py-1 rounded-xl">
+                            <i class="fa-solid fa-calendar-day text-sky-600"></i> 實驗天數: <span id="day-display" class="text-amber-600 text-base">第 2 天</span>
+                        </span>
+                    </div>
+
+                    <div class="flex items-center gap-2 flex-1 max-w-xs">
+                        <input id="day-slider" type="range" min="1" max="7" value="2" oninput="onDaySliderChange(this.value)" class="w-full accent-emerald-600 cursor-pointer">
+                    </div>
+
+                    <div class="flex items-center gap-1">
+                        <button id="play-btn" onclick="togglePlay()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-3 py-1.5 rounded-xl shadow-sm text-xs flex items-center gap-1">
+                            <i class="fa-solid fa-play"></i> 自動模擬
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="lg:col-span-4 flex flex-col gap-4">
+                
+                <!-- AI Assistant Box -->
+                <div class="bg-gradient-to-br from-indigo-500 to-sky-600 text-white rounded-3xl p-4 shadow-md relative overflow-hidden flex flex-col">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-amber-300">
+                                <i class="fa-solid fa-robot text-lg"></i>
+                            </div>
+                            <span class="font-black text-sm tracking-wide">HKU AI 科學小幫手</span>
+                        </div>
+                        <span class="text-[10px] bg-amber-400 text-slate-900 font-bold px-2 py-0.5 rounded-full">小一專用導學</span>
+                    </div>
+                    
+                    <div id="ai-response" class="bg-white/10 rounded-2xl p-3 text-xs leading-relaxed font-medium min-h-[90px] border border-white/20 custom-scrollbar overflow-y-auto">
+                        👋 你好！我是你的 AI 養菌導師。嘗試改變「濕度」或「溫度」，看看麵包上的黴菌菌落會有什麼奇妙變化吧！
+                    </div>
+
+                    <!-- Quick Preset Experiment Suggestions -->
+                    <div class="mt-3 pt-2 border-t border-white/20 flex flex-wrap gap-1.5">
+                        <button onclick="applyPreset('dry')" class="bg-white/20 hover:bg-white/30 text-[11px] px-2.5 py-1 rounded-lg transition font-semibold">🌵 乾燥對比</button>
+                        <button onclick="applyPreset('humid')" class="bg-white/20 hover:bg-white/30 text-[11px] px-2.5 py-1 rounded-lg transition font-semibold">💦 高濕快速發黴</button>
+                        <button onclick="applyPreset('cold')" class="bg-white/20 hover:bg-white/30 text-[11px] px-2.5 py-1 rounded-lg transition font-semibold">🧊 冰箱抑菌</button>
+                    </div>
+                </div>
+
+                <!-- Colony Count Chart -->
+                <div class="bg-white/90 rounded-3xl p-4 border-2 border-sky-100 shadow-sm flex-1 flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-xs font-black text-sky-900 flex items-center gap-1.5">
+                            <i class="fa-solid fa-chart-column text-emerald-600"></i> 菌落計數對比 (Colony Count)
+                        </h3>
+                        <span class="text-[10px] text-gray-500 font-bold">單位: CFU/cm²</span>
+                    </div>
+
+                    <div class="relative w-full h-44">
+                        <canvas id="colonyChart"></canvas>
+                    </div>
+
+                    <div class="mt-2 text-[11px] text-gray-600 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                        💡 <span class="font-bold text-sky-800">科學結論：</span><span id="chart-summary">溫度在 25-30°C 且濕度大於 70% 時，黴菌生長最迅速。</span>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+
+        <!-- Footer Bar -->
+        <footer class="mt-4 pt-3 border-t border-sky-200 flex flex-col sm:flex-row justify-between items-center text-xs text-sky-700 font-semibold gap-2">
+            <div>
+                🏫 香港大學 (HKU) - QNT-DT 小一 AI 跨學科模擬實驗室
+            </div>
+            <div class="flex items-center gap-4">
+                <span><i class="fa-solid fa-flask text-emerald-600"></i> 安全無菌模擬</span>
+                <span><i class="fa-solid fa-graduation-cap text-sky-600"></i> 適合 P.1 科學課程</span>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- Modal: Microscope Magnification View -->
+    <div id="microscope-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl relative flex flex-col items-center">
+            <button onclick="closeMicroscope()" class="absolute top-4 right-4 w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center text-gray-600 font-bold">
+                ✕
+            </button>
+            
+            <div class="flex items-center gap-2 mb-3">
+                <i class="fa-solid fa-microscope text-2xl text-emerald-600"></i>
+                <h3 id="modal-title" class="text-lg font-black text-gray-800">EXP A 顯微放大視角 (100x)</h3>
+            </div>
+
+            <!-- Microscope Lens Effect Circle -->
+            <div class="w-64 h-64 rounded-full border-8 border-slate-800 shadow-inner overflow-hidden relative bg-amber-50 flex items-center justify-center my-2">
+                <canvas id="micro-canvas" width="260" height="260"></canvas>
+                <!-- Lens Crosshair Overlay -->
+                <div class="absolute inset-0 border border-emerald-500/30 rounded-full pointer-events-none flex items-center justify-center">
+                    <div class="w-full h-[1px] bg-emerald-500/20"></div>
+                    <div class="h-full w-[1px] bg-emerald-500/20 absolute"></div>
+                </div>
+            </div>
+
+            <p id="micro-desc" class="text-xs text-gray-600 text-center mt-3 bg-sky-50 p-3 rounded-xl border border-sky-100">
+                顯微鏡下可以看到黴菌的「菌絲」(Hyphae) 和圓形的「孢子囊」(Sporangia)。
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Simulation State
+        let currentDay = 2;
+        let temperature = 25;
+        let humidity = 60;
+        let locationKey = 'classroom';
+        let isPlaying = false;
+        let timerId = null;
+        let soundEnabled = true;
+
+        // Chart Instance
+        let colonyChart = null;
+
+        // Sound Synthesis setup
+        const speechSynth = window.speechSynthesis;
+
+        // DOM Loaded Init
+        window.onload = function() {
+            initChart();
+            renderPetriDishes();
+            updateAIAdvice();
+        };
+
+        // Location preset handler
+        function onLocationChange() {
+            const loc = document.getElementById('location-select').value;
+            locationKey = loc;
+
+            if (loc === 'classroom') {
+                setParams(25, 60);
+            } else if (loc === 'fridge') {
+                setParams(4, 30);
+            } else if (loc === 'balcony') {
+                setParams(32, 85);
+            } else if (loc === 'bathroom') {
+                setParams(28, 95);
+            } else if (loc === 'darkroom') {
+                setParams(26, 70);
+            }
+            onParamChange();
+        }
+
+        function setParams(temp, hum) {
+            temperature = temp;
+            humidity = hum;
+            document.getElementById('temp-slider').value = temp;
+            document.getElementById('humidity-slider').value = hum;
+            document.getElementById('temp-val').innerText = temp + '°C';
+            document.getElementById('humidity-val').innerText = hum + '%';
+        }
+
+        function onParamChange() {
+            temperature = parseInt(document.getElementById('temp-slider').value);
+            humidity = parseInt(document.getElementById('humidity-slider').value);
+            document.getElementById('temp-val').innerText = temperature + '°C';
+            document.getElementById('humidity-val').innerText = humidity + '%';
+
+            if (locationKey !== 'custom') {
+                // Check if manually moved away from presets
+                document.getElementById('location-select').value = 'custom';
+            }
+
+            renderPetriDishes();
+            updateChartData();
+            updateAIAdvice();
+        }
+
+        function onDaySliderChange(val) {
+            currentDay = parseInt(val);
+            document.getElementById('day-display').innerText = `第 ${currentDay} 天`;
+            renderPetriDishes();
+            updateChartData();
+            updateAIAdvice();
+        }
+
+        function togglePlay() {
+            const btn = document.getElementById('play-btn');
+            if (isPlaying) {
+                clearInterval(timerId);
+                isPlaying = false;
+                btn.innerHTML = `<i class="fa-solid fa-play"></i> 自動模擬`;
+                btn.classList.replace('bg-rose-500', 'bg-emerald-500');
+            } else {
+                isPlaying = true;
+                btn.innerHTML = `<i class="fa-solid fa-pause"></i> 暫停`;
+                btn.classList.replace('bg-emerald-500', 'bg-rose-500');
+
+                timerId = setInterval(() => {
+                    currentDay++;
+                    if (currentDay > 7) currentDay = 1;
+                    document.getElementById('day-slider').value = currentDay;
+                    onDaySliderChange(currentDay);
+                }, 1600);
+            }
+        }
+
+        function resetSimulation() {
+            if (isPlaying) togglePlay();
+            currentDay = 2;
+            document.getElementById('day-slider').value = 2;
+            document.getElementById('location-select').value = 'classroom';
+            onLocationChange();
+        }
+
+        // Preset Shortcut Buttons
+        function applyPreset(type) {
+            if (type === 'dry') {
+                document.getElementById('location-select').value = 'custom';
+                setParams(25, 15);
+            } else if (type === 'humid') {
+                document.getElementById('location-select').value = 'custom';
+                setParams(30, 90);
+            } else if (type === 'cold') {
+                document.getElementById('location-select').value = 'fridge';
+                onLocationChange();
+            }
+            onParamChange();
+        }
+
+        function renderPetriDishes() {
+            drawBreadCanvas('canvas-expA', 'EXP A');
+            drawBreadCanvas('canvas-expB', 'EXP B');
+        }
+
+        function drawBreadCanvas(canvasId, expType) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+
+            // Draw Bread Slice
+            ctx.save();
+            ctx.fillStyle = "#fffbf0";
+            ctx.strokeStyle = "#c68a4c";
+            ctx.lineWidth = 8;
+            ctx.lineJoin = "round";
+
+            // Draw rounded slice shape
+            const w = 120;
+            const h = 120;
+            const x = centerX - w / 2;
+            const y = centerY - h / 2 + 5;
+
+            ctx.beginPath();
+            ctx.moveTo(x + 20, y);
+            ctx.quadraticCurveTo(centerX, y - 15, x + w - 20, y);
+            ctx.quadraticCurveTo(x + w + 10, y + h / 2, x + w - 10, y + h);
+            ctx.lineTo(x + 10, y + h);
+            ctx.quadraticCurveTo(x - 10, y + h / 2, x + 20, y);
+            ctx.closePath();
+
+            ctx.fill();
+            ctx.stroke();
+
+            // Bread inner texture
+            ctx.fillStyle = "rgba(220, 200, 170, 0.15)";
+            for (let i = 0; i < 15; i++) {
+                let rx = x + 15 + ((i * 17) % (w - 30));
+                let ry = y + 15 + ((i * 23) % (h - 30));
+                ctx.beginPath();
+                ctx.arc(rx, ry, (i % 3) + 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+
+            // Calculate mould factor based on EXP A vs EXP B and environment
+            // EXP A is control (e.g. 50% slower mould), EXP B is standard/experimental
+            let mult = (expType === 'EXP A') ? 0.35 : 1.0;
+
+            // Temperature growth curve: peak around 28-32°C, slow < 10°C
+            let tempFactor = Math.max(0.05, Math.sin(Math.min(temperature, 40) / 40 * Math.PI));
+            let humFactor = Math.pow(humidity / 100, 1.8);
+            let timeFactor = Math.pow(currentDay / 7, 2);
+
+            let mouldIntensity = mult * tempFactor * humFactor * timeFactor * 100;
+
+            // Render Mould Spots
+            drawMouldSpots(ctx, centerX, centerY, mouldIntensity, expType);
+
+            // Update status text badge
+            const statusElem = document.getElementById(expType === 'EXP A' ? 'expA-status' : 'expB-status');
+            if (mouldIntensity < 8) {
+                statusElem.innerText = "微量 / 無黴菌 (Clean)";
+                statusElem.className = "inline-block bg-slate-100 text-slate-700 text-xs font-bold px-3 py-1 rounded-full border border-slate-300";
+            } else if (mouldIntensity < 35) {
+                statusElem.innerText = "輕微黴菌 (Mild Mould)";
+                statusElem.className = "inline-block bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full border border-emerald-200";
+            } else {
+                statusElem.innerText = "嚴重黴菌 (Heavy Mould)";
+                statusElem.className = "inline-block bg-rose-100 text-rose-800 text-xs font-bold px-3 py-1 rounded-full border border-rose-200";
+            }
+        }
+
+        // Seeded random mold generation for consistency
+        function drawMouldSpots(ctx, cx, cy, intensity, expType) {
+            if (intensity <= 0.5) return;
+
+            const spotCount = Math.floor(intensity * 1.8);
+            const seedOffset = (expType === 'EXP A') ? 100 : 500;
+
+            for (let i = 0; i < spotCount; i++) {
+                let pseudoRandX = Math.sin(i * 12.9898 + seedOffset) * 45;
+                let pseudoRandY = Math.cos(i * 78.233 + seedOffset) * 45;
+                let spotRadius = 4 + (Math.sin(i + seedOffset) + 1) * 6 * (intensity / 30);
+
+                let x = cx + pseudoRandX;
+                let y = cy + pseudoRandY;
+
+                // Color palette for mould (greenish black, dusty yellow, dark teal)
+                let colorType = i % 4;
+                let grad = ctx.createRadialGradient(x, y, 1, x, y, Math.max(spotRadius, 2));
+
+                if (colorType === 0) {
+                    grad.addColorStop(0, 'rgba(30, 70, 45, 0.85)');
+                    grad.addColorStop(0.7, 'rgba(50, 110, 70, 0.6)');
+                    grad.addColorStop(1, 'rgba(50, 110, 70, 0)');
+                } else if (colorType === 1) {
+                    grad.addColorStop(0, 'rgba(20, 35, 25, 0.9)');
+                    grad.addColorStop(0.8, 'rgba(35, 60, 45, 0.5)');
+                    grad.addColorStop(1, 'rgba(35, 60, 45, 0)');
+                } else if (colorType === 2) {
+                    grad.addColorStop(0, 'rgba(210, 180, 90, 0.7)');
+                    grad.addColorStop(0.7, 'rgba(180, 150, 60, 0.4)');
+                    grad.addColorStop(1, 'rgba(180, 150, 60, 0)');
+                } else {
+                    grad.addColorStop(0, 'rgba(40, 50, 45, 0.8)');
+                    grad.addColorStop(1, 'rgba(100, 120, 110, 0)');
+                }
+
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(x, y, Math.max(spotRadius, 2), 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('colonyChart').getContext('2d');
+            colonyChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['D2 (第2天)', 'D4 (第4天)', 'D6 (第6天)'],
+                    datasets: [
+                        {
+                            label: 'EXP A 菌落',
+                            data: [3.6, 3.6, 4.2],
+                            backgroundColor: '#eab308',
+                            borderRadius: 8
+                        },
+                        {
+                            label: 'EXP B 菌落',
+                            data: [857, 1600, 2840],
+                            backgroundColor: '#2563eb',
+                            borderRadius: 8
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: { font: { family: 'Noto Sans TC', weight: 'bold', size: 10 } }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { font: { size: 9 } }
+                        },
+                        x: {
+                            ticks: { font: { size: 9, weight: 'bold' } }
+                        }
+                    }
+                }
+            });
+            updateChartData();
+        }
+
+        function updateChartData() {
+            if (!colonyChart) return;
+
+            let tempFactor = Math.max(0.05, Math.sin(Math.min(temperature, 40) / 40 * Math.PI));
+            let humFactor = Math.pow(humidity / 100, 1.8);
+
+            // Calculate mock counts for D2, D4, D6 based on current sliders
+            let expB_D2 = Math.round(150 * tempFactor * humFactor * 2 * 2);
+            let expB_D4 = Math.round(150 * tempFactor * humFactor * 4 * 4.5);
+            let expB_D6 = Math.round(150 * tempFactor * humFactor * 6 * 8);
+
+            let expA_D2 = Math.round(expB_D2 * 0.15 + 2);
+            let expA_D4 = Math.round(expB_D4 * 0.15 + 3);
+            let expA_D6 = Math.round(expB_D6 * 0.18 + 4);
+
+            colonyChart.data.datasets[0].data = [expA_D2, expA_D4, expA_D6];
+            colonyChart.data.datasets[1].data = [expB_D2, expB_D4, expB_D6];
+            colonyChart.update();
+
+            // Summary advice update
+            const summary = document.getElementById('chart-summary');
+            if (humidity < 40) {
+                summary.innerText = "環境非常乾燥！水份不足會嚴重阻礙黴菌孢子萌發與生長。";
+            } else if (temperature < 12) {
+                summary.innerText = "低溫環境（如冰箱）能大幅減緩黴菌繁殖速度，達到保鮮效果。";
+            } else if (humidity >= 70 && temperature >= 24) {
+                summary.innerText = "警告：高溫高濕是黴菌爆發的最佳溫床！EXP B 菌落呈指數級增長。";
+            } else {
+                summary.innerText = "適度濕度與室溫下，黴菌會隨時間穩定增加菌落數量。";
+            }
+        }
+
+        function updateAIAdvice() {
+            const aiBox = document.getElementById('ai-response');
+            let text = "";
+
+            if (humidity < 35) {
+                text = `🌵 觀察發現：目前濕度只有 ${humidity}%！黴菌非常需要水份才能發芽。因為太乾燥，麵包上的黴菌幾乎沒有增加喔！`;
+            } else if (temperature < 10) {
+                text = `🧊 觀察發現：溫度低至 ${temperature}°C。就像把麵包放在冰箱裡一樣，低溫會讓黴菌「睡著」，生長得非常慢！`;
+            } else if (humidity > 75 && temperature >= 25) {
+                text = `💥 哇！現在是 ${temperature}°C 加 ${humidity}% 高濕度！這是黴菌最愛的「黃金環境」！第 ${currentDay} 天的黴菌菌落快速擴散了！`;
+            } else {
+                text = `🔬 探究中：目前環境為 ${temperature}°C / 濕度 ${humidity}%。EXP B 菌落數在第 ${currentDay} 天有明顯變化，試試調高濕度看看？`;
+            }
+
+            aiBox.innerHTML = text;
+
+            if (soundEnabled && speechSynth && !speechSynth.speaking) {
+                speakAI(text.replace(/^[^\u4e00-\u9fa5]+/, ''));
+            }
+        }
+
+        function speakAI(text) {
+            try {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'zh-HK';
+                utterance.rate = 1.0;
+                speechSynth.speak(utterance);
+            } catch (e) {
+                console.log("Speech not supported");
+            }
+        }
+
+        function toggleAudio() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('sound-txt').innerText = soundEnabled ? "語音解說：開" : "語音解說：關";
+            if (!soundEnabled && speechSynth) {
+                speechSynth.cancel();
+            }
+        }
+
+        function inspectMicroscope(type) {
+            document.getElementById('modal-title').innerText = `${type} 顯微放大視角 (100x)`;
+            document.getElementById('microscope-modal').classList.remove('hidden');
+
+            const mCanvas = document.getElementById('micro-canvas');
+            const mCtx = mCanvas.getContext('2d');
+            mCtx.clearRect(0, 0, mCanvas.width, mCanvas.height);
+
+            // Background mycelium web
+            mCtx.fillStyle = "#faf5e8";
+            mCtx.fillRect(0, 0, mCanvas.width, mCanvas.height);
+
+            // Draw Hyphae threads
+            mCtx.strokeStyle = "rgba(40, 90, 60, 0.4)";
+            mCtx.lineWidth = 3;
+            for (let i = 0; i < 18; i++) {
+                mCtx.beginPath();
+                let startX = (i * 35) % 260;
+                mCtx.moveTo(startX, 0);
+                mCtx.bezierCurveTo(startX + 40, 80, startX - 40, 180, (startX + 80) % 260, 260);
+                mCtx.stroke();
+            }
+
+            // Draw Sporangia (round spore heads)
+            let sporeCount = (type === 'EXP A') ? 8 : 28;
+            for (let j = 0; j < sporeCount; j++) {
+                let sx = (j * 47) % 220 + 20;
+                let sy = (j * 73) % 220 + 20;
+
+                // Stem
+                mCtx.strokeStyle = "#2d5a3f";
+                mCtx.lineWidth = 2;
+                mCtx.beginPath();
+                mCtx.moveTo(sx, sy);
+                mCtx.lineTo(sx - 10, sy + 25);
+                mCtx.stroke();
+
+                // Spore Ball
+                mCtx.fillStyle = "#1e392a";
+                mCtx.beginPath();
+                mCtx.arc(sx, sy, 8, 0, Math.PI * 2);
+                mCtx.fill();
+
+                // Tiny surrounding spores
+                mCtx.fillStyle = "#4ade80";
+                for (let k = 0; k < 4; k++) {
+                    mCtx.beginPath();
+                    mCtx.arc(sx + (Math.sin(k) * 12), sy + (Math.cos(k) * 12), 2, 0, Math.PI * 2);
+                    mCtx.fill();
+                }
+            }
+
+            const desc = document.getElementById('micro-desc');
+            if (type === 'EXP A') {
+                desc.innerHTML = "🔍 <b>EXP A 觀察結果：</b> 菌絲密度較低，孢子囊數量較少，說明生長環境受到控制。";
+            } else {
+                desc.innerHTML = "🔍 <b>EXP B 觀察結果：</b> 菌絲網密密麻麻，形成了成熟的黑綠色孢子囊群 (Sporangia)，正在向空氣中釋放孢子！";
+            }
+        }
+
+        function closeMicroscope() {
+            document.getElementById('microscope-modal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
